@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Personal AI</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <style>
+    :root {
+      --guardian: #7c6ff7;
+      --health: #00c896;
+      --productivity: #f9b234;
+      --travel: #ff6b4a;
+      --knowledge: #4aa8ff;
+      --bg: #0c0c12;
+      --surface: #16161f;
+      --surface2: #1e1e2a;
+      --text: #f0f0f0;
+      --muted: #666;
+      --active: var(--guardian);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 0 0 40px;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      width: 100%;
+      padding: 52px 24px 16px;
+      text-align: center;
+    }
+    .header h1 { font-size: 17px; font-weight: 600; letter-spacing: 0.3px; color: var(--text); }
+    .header p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* Mode toggle */
+    .mode-toggle {
+      display: flex;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 4px;
+      margin: 0 24px 20px;
+      width: calc(100% - 48px);
+      max-width: 460px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .mode-btn.active {
+      background: var(--surface2);
+      color: var(--text);
+    }
+    .mode-btn .material-icons-round { font-size: 16px; }
+
+    /* Agent grid */
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      width: calc(100% - 48px);
+      max-width: 460px;
+      margin-bottom: 28px;
+    }
+    .agent-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 4px 10px;
+      border-radius: 14px;
+      border: 1.5px solid transparent;
+      background: var(--surface);
+      cursor: pointer;
+      transition: all 0.18s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .agent-card:active { transform: scale(0.95); }
+    .agent-card.active {
+      border-color: var(--agent-color);
+      background: var(--surface2);
+    }
+    .agent-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--agent-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .agent-card span {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 500;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .agent-card.active span { color: var(--text); }
+
+    /* Agent name display */
+    .agent-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--active);
+      margin-bottom: 6px;
+      transition: color 0.2s;
+    }
+
+    /* Mode hint */
+    .mode-hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      text-align: center;
+      padding: 0 32px;
+      line-height: 1.5;
+    }
+
+    /* Material Design Mic Button */
+    .mic-wrapper {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+    }
+    .ripple-ring {
+      position: absolute;
+      inset: -12px;
+      border-radius: 50%;
+      border: 2px solid var(--active);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .ripple-ring.animate {
+      animation: ripple 1.4s ease-out infinite;
+    }
+    .ripple-ring:nth-child(2) { animation-delay: 0.4s; }
+    .ripple-ring:nth-child(3) { animation-delay: 0.8s; }
+    @keyframes ripple {
+      0% { transform: scale(0.85); opacity: 0.6; }
+      100% { transform: scale(1.4); opacity: 0; }
+    }
+    #mic-btn {
+      position: relative;
+      z-index: 2;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: none;
+      background: var(--active);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s, transform 0.1s;
+      -webkit-appearance: none;
+      appearance: none;
+      outline: none;
+      touch-action: manipulation;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    #mic-btn:active { transform: scale(0.93); }
+    #mic-btn:disabled { background: #333; box-shadow: none; }
+    #mic-btn .material-icons-round { font-size: 34px; }
+
+    #status {
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 18px;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    /* Log panel (ingestion mode) */
+    .log-panel {
+      width: calc(100% - 48px);
+      max-width: 460px;
+      display: none;
+    }
+    .log-header {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+    }
+    .log-entry {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      border-left: 3px solid var(--active);
+    }
+    .log-entry .log-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .log-entry .log-text { font-size: 14px; color: var(--text); line-height: 1.5; }
+    .log-entry .log-time { font-size: 10px; color: var(--muted); margin-top: 4px; }
+    .save-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--active);
+      margin-bottom: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .save-indicator.show { opacity: 1; }
+    .save-indicator .material-icons-round { font-size: 14px; }
+
+    /* Chat panel (chat mode) */
+    .chat-panel {
+      width: calc(100% - 48px);
+      max-width: 460px;
+      display: none;
+    }
+    .bubble {
+      padding: 12px 14px;
+      border-radius: 14px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .bubble.you { background: var(--surface); color: #a8c8ff; border-bottom-right-radius: 4px; }
+    .bubble.agent { background: var(--surface2); color: #d0f0d8; border-bottom-left-radius: 4px; border-left: 3px solid var(--active); }
+    .bubble-label { font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    audio { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Personal AI</h1>
+    <p>Shilldas</p>
+  </div>
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="btn-chat" onclick="setMode('chat')">
+      <span class="material-icons-round">chat</span> Talk
+    </button>
+    <button class="mode-btn" id="btn-log" onclick="setMode('log')">
+      <span class="material-icons-round">edit_note</span> Daily log
+    </button>
+  </div>
+
+  <div class="agent-grid">
+    <div class="agent-card active" style="--agent-color:var(--guardian)" data-agent="guardian" onclick="selectAgent(this)">
+      <div class="agent-dot" style="background:var(--guardian)">🛡️</div>
+      <span>Guardian</span>
+    </div>
+    <div class="agent-card" style="--agent-color:var(--health)" data-agent="health" onclick="selectAgent(this)">
+      <div class="agent-dot" style="background:var(--health)">❤️</div>
+      <span>Health</span>
+    </div>
+    <div class="agent-card" style="--agent-color:var(--productivity)" data-agent="productivity" onclick="selectAgent(this)">
+      <div class="agent-dot" style="background:var(--productivity)">⚡</div>
+      <span>Productive</span>
+    </div>
+    <div class="agent-card" style="--agent-color:var(--travel)" data-agent="travel" onclick="selectAgent(this)">
+      <div class="agent-dot" style="background:var(--travel)">✈️</div>
+      <span>Travel</span>
+    </div>
+    <div class="agent-card" style="--agent-color:var(--knowledge)" data-agent="knowledge" onclick="selectAgent(this)">
+      <div class="agent-dot" style="background:var(--knowledge)">📚</div>
+      <span>Knowledge</span>
+    </div>
+  </div>
+
+  <div class="agent-name" id="agent-name">Guardian AI</div>
+  <div class="mode-hint" id="mode-hint">Ask me anything, I know your full context</div>
+
+  <div class="mic-wrapper">
+    <div class="ripple-ring" id="r1"></div>
+    <div class="ripple-ring" id="r2"></div>
+    <div class="ripple-ring" id="r3"></div>
+    <button id="mic-btn" onclick="toggleRecording()" aria-label="Start recording">
+      <span class="material-icons-round" id="mic-icon">mic</span>
+    </button>
+  </div>
+
+  <div id="status">Tap to speak</div>
+
+  <button id="clear-btn" onclick="clearSession()" style="
+    background: transparent;
+    border: 1px solid #333;
+    color: #555;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-bottom: 16px;
+    display: none;
+  " id="clear-btn">Clear conversation</button>
+
+  <div class="save-indicator" id="save-indicator">
+    <span class="material-icons-round">check_circle</span>
+    <span id="save-text">Saved to memory</span>
+  </div>
+
+  <div class="chat-panel" id="chat-panel"></div>
+  <div class="log-panel" id="log-panel">
+    <div class="log-header">Today's log</div>
+  </div>
+
+  <audio id="player" autoplay playsinline></audio>
+
+  <script>
+    // Generate unique session ID for this browser session
+    const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    let currentAgent = 'guardian';
+    let currentMode = 'chat';
+    let mediaRecorder, audioChunks = [], recording = false;
+
+    const agentConfig = {
+      guardian: { name: 'Guardian AI', color: '#7c6ff7', hint: 'Ask me anything, I know your full context' },
+      health:   { name: 'Health AI',   color: '#00c896', hint: 'Tell me about your health, diet, sleep or exercise today' },
+      productivity: { name: 'Productivity AI', color: '#f9b234', hint: 'Tell me what you worked on or accomplished today' },
+      travel:   { name: 'Travel AI',   color: '#ff6b4a', hint: 'Tell me about your travel plans or trips' },
+      knowledge:{ name: 'Knowledge AI',color: '#4aa8ff', hint: 'Tell me what you learned or read today' }
+    };
+
+    const logHints = {
+      guardian: 'Summarise your entire day for Guardian',
+      health:   'What did you eat, how did you sleep, any exercise?',
+      productivity: 'What did you accomplish today? Any blockers?',
+      travel:   'Any upcoming trips or travel plans to log?',
+      knowledge:'What did you learn, read or study today?'
+    };
+
+    function selectAgent(el) {
+      document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      currentAgent = el.dataset.agent;
+      const cfg = agentConfig[currentAgent];
+      document.getElementById('agent-name').textContent = cfg.name;
+      document.getElementById('agent-name').style.color = cfg.color;
+      document.getElementById('mic-btn').style.background = cfg.color;
+      document.documentElement.style.setProperty('--active', cfg.color);
+      updateHint();
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btn-chat').classList.toggle('active', mode === 'chat');
+      document.getElementById('btn-log').classList.toggle('active', mode === 'log');
+      document.getElementById('chat-panel').style.display = mode === 'chat' ? 'block' : 'none';
+      document.getElementById('log-panel').style.display = mode === 'log' ? 'block' : 'none';
+      updateHint();
+    }
+
+    function updateHint() {
+      const hints = currentMode === 'chat' ? agentConfig : logHints;
+      document.getElementById('mode-hint').textContent = hints[currentAgent].hint || hints[currentAgent];
+    }
+
+    async function toggleRecording() {
+      if (!recording) {
+        try {
+          audioChunks = [];
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+          mediaRecorder.onstop = sendAudio;
+          mediaRecorder.start();
+          recording = true;
+          document.getElementById('mic-icon').textContent = 'stop';
+          document.getElementById('r1').classList.add('animate');
+          document.getElementById('r2').classList.add('animate');
+          document.getElementById('r3').classList.add('animate');
+          document.getElementById('status').textContent = 'Listening...';
+        } catch(e) {
+          document.getElementById('status').textContent = 'Microphone access denied';
+        }
+      } else {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        recording = false;
+        document.getElementById('mic-icon').textContent = 'mic';
+        document.getElementById('r1').classList.remove('animate');
+        document.getElementById('r2').classList.remove('animate');
+        document.getElementById('r3').classList.remove('animate');
+        document.getElementById('mic-btn').disabled = true;
+        document.getElementById('status').textContent = 'Processing...';
+      }
+    }
+
+    async function sendAudio() {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const formData = new FormData();
+      formData.append('audio', blob, 'voice.webm');
+      formData.append('agent', currentAgent);
+      formData.append('session_id', sessionId);
+      formData.append('mode', currentMode);
+
+      try {
+        const endpoint = currentMode === 'log' ? '/log' : '/voice';
+        const res = await fetch(endpoint, { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (currentMode === 'chat') {
+          const panel = document.getElementById('chat-panel');
+          panel.style.display = 'block';
+          const box = document.createElement('div');
+          box.innerHTML = `
+            <div class="bubble you"><div class="bubble-label">You</div>${data.transcript}</div>
+            <div class="bubble agent"><div class="bubble-label">${data.agent}</div>${data.response}</div>
+          `;
+          panel.insertBefore(box, panel.firstChild);
+          document.getElementById('player').src = data.audio_url;
+          document.getElementById('player').play();
+          document.getElementById('status').textContent = 'Tap to speak again';
+          document.getElementById('clear-btn').style.display = 'inline-block';
+        } else {
+          // Log mode — show saved entry
+          const panel = document.getElementById('log-panel');
+          panel.style.display = 'block';
+          const entry = document.createElement('div');
+          entry.className = 'log-entry';
+          entry.innerHTML = `
+            <div class="log-label">${agentConfig[currentAgent].name}</div>
+            <div class="log-text">${data.transcript || data.you || 'Logged'}</div>
+            <div class="log-time">${new Date().toLocaleTimeString()} · Saved to memory</div>
+          `;
+          panel.appendChild(entry);
+
+          const ind = document.getElementById('save-indicator');
+          document.getElementById('save-text').textContent = `Saved to ${agentConfig[currentAgent].name} memory`;
+          ind.classList.add('show');
+          setTimeout(() => ind.classList.remove('show'), 3000);
+          document.getElementById('status').textContent = 'Tap to add more';
+        }
+      } catch (err) {
+        document.getElementById('status').textContent = 'Error — try again';
+        console.error(err);
+      }
+
+      document.getElementById('mic-btn').disabled = false;
+    }
+
+    async function clearSession() {
+      const formData = new FormData();
+      formData.append('session_id', sessionId);
+      await fetch('/clear_session', { method: 'POST', body: formData });
+      document.getElementById('chat-panel').innerHTML = '';
+      document.getElementById('clear-btn').style.display = 'none';
+      document.getElementById('status').textContent = 'Conversation cleared';
+    }
+  </script>
+</body>
+</html>
