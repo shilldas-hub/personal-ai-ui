@@ -417,7 +417,10 @@
       formData.append('mode', currentMode);
 
       try {
-        const endpoint = currentMode === 'log' ? '/log' : '/voice';
+        const N8N_BASE = 'https://viewable-tanesha-preparatively.ngrok-free.dev';
+        const endpoint = currentMode === 'log'
+          ? `${N8N_BASE}/webhook/log`
+          : `${N8N_BASE}/webhook/voice`;
         const res = await fetch(endpoint, { method: 'POST', body: formData });
         const data = await res.json();
 
@@ -430,7 +433,9 @@
             <div class="bubble agent"><div class="bubble-label">${data.agent}</div>${data.response}</div>
           `;
           panel.insertBefore(box, panel.firstChild);
-          document.getElementById('player').src = data.audio_url;
+          // audio comes back as base64 from n8n
+          const audioBlob = await fetch(`data:audio/mp3;base64,${data.audio_base64}`).then(r => r.blob());
+          document.getElementById('player').src = URL.createObjectURL(audioBlob);
           document.getElementById('player').play();
           document.getElementById('status').textContent = 'Tap to speak again';
           document.getElementById('clear-btn').style.display = 'inline-block';
@@ -464,7 +469,8 @@
     async function clearSession() {
       const formData = new FormData();
       formData.append('session_id', sessionId);
-      await fetch('/clear_session', { method: 'POST', body: formData });
+      const N8N_BASE = 'https://viewable-tanesha-preparatively.ngrok-free.dev';
+      await fetch(`${N8N_BASE}/webhook/clear_session`, { method: 'POST', body: formData });
       document.getElementById('chat-panel').innerHTML = '';
       document.getElementById('clear-btn').style.display = 'none';
       document.getElementById('status').textContent = 'Conversation cleared';
